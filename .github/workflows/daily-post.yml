@@ -1,0 +1,48 @@
+name: Automatic Zenn Post
+
+on:
+  schedule:
+    # 毎日 日本時間の朝9時に実行
+    - cron: '0 0 * * *'
+  workflow_dispatch: # 手動実行用ボタン
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -U google-genai  # 新しいライブラリを指定
+
+      - name: Generate Articles with Python
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python articles/process/daily_article.py
+          sleep 60
+          python articles/wiki/wiki_generator.py
+
+      - name: Commit and Push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # 【修正2】画像などの添付ファイルもadd対象にするため、ディレクトリごと指定
+          git add articles/process/
+          git add articles/wiki/
+          
+          # 変更がある場合のみコミット
+          if ! git diff --cached --exit-code --quiet; then
+            git commit -m "Add daily AI-generated log and wiki with assets"
+            git push
+          else
+            echo "No changes to commit"
+          fi
