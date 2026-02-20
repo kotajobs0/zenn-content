@@ -1,48 +1,54 @@
-name: Automatic Zenn Post
+name: Daily Content Generation
 
 on:
   schedule:
-    # 毎日 日本時間の朝9時に実行
-    - cron: '0 0 * * *'
-  workflow_dispatch: # 手動実行用ボタン
+    - cron: '0 21 * * *'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: Install dependencies
+        # ここで確実にライブラリをインストールさせます
         run: |
-          pip install --upgrade pip
-          pip install -U google-genai  # 新しいライブラリを指定
+          python -m pip install --upgrade pip
+          pip install google-genai python-dotenv
 
-      - name: Generate Articles with Python
+      - name: Generate content
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # Secretsの名前が GOOGLE_API_KEY であることを確認してください
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
+          # 実行時はリポジトリのルートを基準に呼び出すので、この書き方でOKです
           python articles/process/daily_article.py
-          sleep 60
+          sleep 10
           python articles/wiki/wiki_generator.py
 
-      - name: Commit and Push
+      - name: Copy files to Zenn articles folder
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # 【修正2】画像などの添付ファイルもadd対象にするため、ディレクトリごと指定
-          git add articles/process/
-          git add articles/wiki/
-          
-          # 変更がある場合のみコミット
-          if ! git diff --cached --exit-code --quiet; then
-            git commit -m "Add daily AI-generated log and wiki with assets"
-            git push
-          else
-            echo "No changes to commit"
-          fi
+          # 2>/dev/null || true を付けることで、ファイルがない場合のエラー停止を防ぎます
+          cp articles/data/logs/*.md articles/ 2>/dev/null || true
+          cp articles/data/refs/*.md articles/ 2>/dev/null || true
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "feat: AI生成記事をZenn下書きへ反映"
+          title: "【自動生成】新しい記事の下書き"
+          body: "AIが生成した記事をコピーしました。内容を確認してください。"
+          branch: "auto-generated-content"
+          delete-branch: true
