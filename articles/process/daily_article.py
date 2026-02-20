@@ -1,10 +1,13 @@
 import os
+from pathlib import Path
 import datetime
 from dotenv import load_dotenv
 import google.genai as genai
 
-# 1. .envファイルの内容を環境変数として読み込む
-load_dotenv()
+# 1. スクリプトの場所からプロジェクトのルートパスを計算
+#    (articles/process/ から2つ上の階層にある .env を指定)
+env_path = Path(__file__).resolve().parent.parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 # 2. 環境変数から値を取り出す
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -65,11 +68,21 @@ def main():
     prompt = create_prompt()
     article_content = get_ai_response(prompt)
 
-    date_str = datetime.datetime.now().strftime('%Y-%m-%d')
-    directory = "articles"
-    filename = f"{directory}/log-{date_str}.md"
+# 1. 保存先フォルダを指定 (例: articles/data/logs)
+    output_dir = os.path.join("articles", "data", "logs")
+    
+    # 2. フォルダがなければ作成する (makedirsは中間のフォルダも全部作ってくれます)
+    os.makedirs(output_dir, exist_ok=True)
 
-    os.makedirs(directory, exist_ok=True)
+    # 3. ファイル名に「時間」も含めると、1日複数回実行しても整理しやすくなります
+    # 例: log-2026-02-20_153022.md (15時30分22秒)
+    now = datetime.datetime.now()
+    date_str = now.strftime('%Y-%m-%d_%H%M%S')
+    filename = f"log-{date_str}.md"
+    
+    # 4. フルパスを結合
+    full_path = os.path.join(output_dir, filename)
+
     with open(filename, "w", encoding="utf-8") as f:
         f.write(article_content)
     
