@@ -68,22 +68,37 @@ def main():
     prompt = create_prompt()
     article_content = get_ai_response(prompt)
 
-# 1. 保存先フォルダを指定 (例: articles/data/logs)
-    output_dir = os.path.join("articles", "data", "logs")
+# 1. プログラム本体(daily_article.py)の絶対パスを取得
+    # これにより、どこから実行しても「スクリプトがある場所」が基準になります
+    script_path = os.path.abspath(__file__)
+    script_dir = os.path.dirname(script_path) # articles/process フォルダ
+
+ # 2. パスを組み立てる
+    # script_dir (articles/process) から
+    # 一つ上の ".." (articles) に戻り、
+    # その中の "data/logs" を指定する
+    output_dir = os.path.normpath(os.path.join(script_dir, "..", "data", "logs"))
     
-    # 2. フォルダがなければ作成する (makedirsは中間のフォルダも全部作ってくれます)
+    print(f"DEBUG: スクリプトの場所 -> {script_dir}")
+    print(f"DEBUG: 計算された保存先 -> {output_dir}")
+    
+    if os.path.exists(output_dir):
+        print("✅ フォルダは見つかりました！")
+    else:
+        print("❌ フォルダが見つかりません。新しく作成します。")
+    
+    # 3. フォルダが存在しなければ作成
     os.makedirs(output_dir, exist_ok=True)
 
-    # 3. ファイル名に「時間」も含めると、1日複数回実行しても整理しやすくなります
-    # 例: log-2026-02-20_153022.md (15時30分22秒)
+    # 4. ファイル名の生成
     now = datetime.datetime.now()
     date_str = now.strftime('%Y-%m-%d_%H%M%S')
     filename = f"log-{date_str}.md"
-    
-    # 4. フルパスを結合
-    full_path = os.path.join(output_dir, filename)
 
-    with open(filename, "w", encoding="utf-8") as f:
+    # 5. 最終的な保存先フルパス
+    full_save_path = os.path.join(output_dir, filename)
+
+    with open(full_save_path, "w", encoding="utf-8") as f: # 計算したフルパスを使う！
         f.write(article_content)
     
     print(f"Success: {filename} has been created!")

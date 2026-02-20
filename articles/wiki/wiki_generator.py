@@ -28,7 +28,7 @@ def get_ai_response(prompt):
         text = text[start_index:]
     return text
 
-def create_wiki_prompt():
+def create_prompt():
     return """
 あなたは、チームの技術標準を策定するリードエンジニアとして、若手が「そのまま実行できる」Zenn形式の技術リファレンス（Wiki）を書いてください。
 
@@ -51,20 +51,32 @@ def main():
     if not GOOGLE_API_KEY:
         print("Error: GEMINI_API_KEY is not set.")
         return
+# このファイルがある articles/wiki フォルダ
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # articles/wiki から 1つ上に上がり(articles)、data/refs へ進む
+    output_dir = os.path.normpath(os.path.join(script_dir, "..", "data", "refs"))
+    
+    # フォルダを作成
+    os.makedirs(output_dir, exist_ok=True)
 
-    print("Generating technical wiki article...")
-    prompt = create_wiki_prompt()
+    print("Generating Wiki content...")
+    prompt = create_prompt()
     article_content = get_ai_response(prompt)
 
-    date_str = datetime.datetime.now().strftime('%Y-%m-%d')
-    directory = "articles"
-    filename = f"{directory}/ref-{date_str}.md"
+    # ファイル名の生成 (Wiki用なので ref- から始める)
+    now = datetime.datetime.now()
+    date_str = now.strftime('%Y-%m-%d_%H%M%S')
+    filename = f"ref-{date_str}.md"
 
-    os.makedirs(directory, exist_ok=True)
-    with open(filename, "w", encoding="utf-8") as f:
+    # 最終的な保存先フルパス
+    full_save_path = os.path.join(output_dir, filename)
+
+    # 保存実行
+    with open(full_save_path, "w", encoding="utf-8") as f:
         f.write(article_content)
     
-    print(f"Success: {filename} has been created!")
+    print(f"Success: {full_save_path} has been created!")
 
 if __name__ == "__main__":
     main()
