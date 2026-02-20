@@ -1,11 +1,15 @@
 import os
 import datetime
-from google import genai
+from dotenv import load_dotenv
+import google.genai as genai
 
-# GitHub SecretsからAPIキーを読み込む
-GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
+# 1. .envファイルの内容を環境変数として読み込む
+load_dotenv()
 
-# クライアントの初期化（api_version: 'v1' を指定）
+# 2. 環境変数から値を取り出す
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+# 3. クライアントを初期化
 client = genai.Client(
     api_key=GOOGLE_API_KEY,
     http_options={'api_version': 'v1beta'}
