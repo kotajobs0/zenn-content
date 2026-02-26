@@ -41,7 +41,9 @@ jobs:
         run: |
           # 2>/dev/null || true を付けることで、ファイルがない場合のエラー停止を防ぎます
           cp articles/data/logs/*.md articles/ 2>/dev/null || true
+          # Wiki/Ref用（もしフォルダ名が wiki だった場合も考慮）
           cp articles/data/refs/*.md articles/ 2>/dev/null || true
+          cp articles/data/wiki/*.md articles/ 2>/dev/null || true
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
