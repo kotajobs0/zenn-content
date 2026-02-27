@@ -22,6 +22,10 @@ def get_ai_response(prompt):
     )
     text = response.text
     
+    text = text.replace('```markdown', '')
+    text = text.replace('```yaml', '')
+    text = text.replace('```', '')
+    
     # ---が最初に出てくる位置からを記事本文として取得
     start_index = text.find('---')
     if start_index != -1:
@@ -38,13 +42,13 @@ def create_prompt():
 3. **解説の深さ**: メモリ効率、スレッドセーフなどプロフェッショナルな視点。
 
 ## Zenn用Front Matter
----
+
 title: "【Wiki】[技術テーマ名] (Java/C# 実装リファレンス)"
 emoji: "🛠️"
 type: "tech"
 topics: ["java", "csharp", "新人教育", "architecture", "wiki"]
 published: false
----
+
 """
 
 def main():
