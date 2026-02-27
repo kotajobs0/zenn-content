@@ -22,14 +22,17 @@ def get_ai_response(prompt):
     )
     text = response.text
     
-    text = text.replace('```markdown', '')
-    text = text.replace('```yaml', '')
-    text = text.replace('```', '')
-    
-    # ---が最初に出てくる位置からを記事本文として取得
+    # --- が最初に出てくる位置を探す
     start_index = text.find('---')
     if start_index != -1:
-        text = text[start_index:]
+        # --- より前の部分だけバッククォートを除去（Front Matter前のゴミ掃除）
+        before = text[:start_index].replace('```markdown', '').replace('```yaml', '').replace('```', '')
+        # --- 以降（Front Matter + 記事本文）はそのまま残す
+        text = before + text[start_index:]
+
+    # 先頭の空白・改行を除去して --- から始まるようにする
+    text = text.strip()
+
     return text
 
 def create_prompt():
@@ -41,14 +44,19 @@ def create_prompt():
 2. **バージョン・アップデート情報**: 言語バージョンアップに伴う推奨される書き方の変化。
 3. **解説の深さ**: メモリ効率、スレッドセーフなどプロフェッショナルな視点。
 
-## Zenn用Front Matter
+## Zenn用Front Matterの形式
+記事の冒頭には、以下の形式のFront Matterを必ず含めてください。
+バッククォートやコードブロック記法で囲まず、そのままの形式で出力してください。
 
+---
 title: "【Wiki】[技術テーマ名] (Java/C# 実装リファレンス)"
 emoji: "🛠️"
 type: "tech"
 topics: ["java", "csharp", "新人教育", "architecture", "wiki"]
 published: false
+---
 
+上記の --- で始まり --- で終わる部分が、記事の一番最初にそのまま来るように出力してください。
 """
 
 def main():
