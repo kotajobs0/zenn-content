@@ -92,7 +92,7 @@ def main():
 
     # 4. ファイル名の生成
     now = datetime.datetime.now()
-    date_str = now.strftime('%Y-%m-%d_%H%M%S')
+    date_str = now.strftime('%Y-%m-%d-%H%M%S')
     filename = f"log-{date_str}.md"
 
     # 5. 最終的な保存先フルパス
