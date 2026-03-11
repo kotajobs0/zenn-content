@@ -34,8 +34,7 @@ jobs:
         run: |
           # 実行時はリポジトリのルートを基準に呼び出すので、この書き方でOKです
           python articles/process/daily_article.py
-          sleep 10
-          python articles/wiki/wiki_generator.py
+          python articles/process/wiki_generator.py
 
       - name: Copy files to Zenn articles folder
         run: |

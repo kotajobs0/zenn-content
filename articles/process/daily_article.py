@@ -1,4 +1,7 @@
 import os
+import sys
+import random
+import time
 from pathlib import Path
 import datetime
 from dotenv import load_dotenv
@@ -18,40 +21,79 @@ client = genai.Client(
     http_options={'api_version': 'v1beta'}
 )
 
-def get_ai_response(prompt):
-    # 最新モデルを指定。'models/' は付けても付けなくても動作しますが、まずはシンプルに指定します。
-    response = client.models.generate_content(
-        model='gemini-2.0-flash',
-        contents=prompt
-    )
-    text = response.text
-    
-    # ---が最初に出てくる位置からを記事本文として取得
-    start_index = text.find('---')
-    if start_index != -1:
-        text = text[start_index:]
-    
-    return text
+def get_ai_response(prompt, max_retries=3):
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = client.models.generate_content(
+                model='gemini-2.0-flash',
+                contents=prompt
+            )
+            text = response.text
+
+            # ---が最初に出てくる位置からを記事本文として取得
+            start_index = text.find('---')
+            if start_index != -1:
+                text = text[start_index:]
+
+            return text
+        except Exception as e:
+            print(f"Error (attempt {attempt}/{max_retries}): {e}")
+            if attempt < max_retries:
+                time.sleep(5)
+            else:
+                print("Max retries reached. Exiting.")
+                sys.exit(1)
+
+THEMES = [
+    "リファクタリング",
+    "エラー解消デバッグ",
+    "単体テスト設計",
+    "ログ設計・例外処理",
+    "デザインパターン（Strategy）",
+    "デザインパターン（Factory）",
+    "デザインパターン（Observer）",
+    "コードレビューの作法",
+    "命名規則とコードの可読性",
+    "非同期処理・async/await",
+    "コレクション操作（Stream/LINQ）",
+    "依存性注入（DI）",
+    "インターフェース設計",
+    "不変オブジェクト（Immutable）",
+    "Null安全・Optional",
+    "ジェネリクスの活用",
+    "パフォーマンスチューニング入門",
+    "SQLとORMの使い分け",
+    "REST API設計の基礎",
+    "セキュリティ基礎（インジェクション対策）",
+    "データ構造の選択（List vs Map vs Set）",
+    "再帰処理の考え方",
+    "継承vs合成の設計判断",
+    "トランザクション管理の基礎",
+    "バリデーション設計",
+]
 
 def create_prompt():
-    return """
+    theme = random.choice(THEMES)
+    return f"""
 あなたは日本を代表するシニアエンジニアとして、若手社員（Java/C#初心者）に向けて「エンジニアの思考プロセス」を伝えるZenn記事をMarkdownで書いてください。
 
 ## ターゲット
 - 入社1-3年目のJava/C#エンジニア
 - 「動けばいい」から「保守性の高いコード」へのステップアップを目指している層
 
+## 今回のテーマ
+【{theme}】
+
 ## 内容の構成
-1. **今回のテーマ**: 【リファクタリング】または【エラー解消デバッグ】から1つ選択。
-2. **AIとの対話記録**: 
+1. **AIとの対話記録**:
    - 「若手からの相談」→「シニアのあなたの思考」→「AI(Gemini)への指示」→「AIの回答」という流れを詳しく。
-3. **Java vs C# 実装比較**: 
+2. **Java vs C# 実装比較**:
    - 最新機能（Java 21 / C# 12など）を交えて比較。
-4. **若手への一言**: 明日から使える「お作法」のアドバイス。
+3. **若手への一言**: 明日から使える「お作法」のアドバイス。
 
 ## Zenn用Front Matter
 ---
-title: "【Log】AIとの対話で学ぶ：[テーマ名]"
+title: "【Log】AIとの対話で学ぶ：{theme}"
 emoji: "🎓"
 type: "tech"
 topics: ["java", "csharp", "新人教育", "ai", "思考プロセス"]
@@ -61,8 +103,8 @@ published: false
 
 def main():
     if not GOOGLE_API_KEY:
-        print("Error: GEMINI_API_KEY is not set.")
-        return
+        print("Error: GOOGLE_API_KEY is not set.")
+        sys.exit(1)
 
     print("Generating mentor-style article...")
     prompt = create_prompt()
