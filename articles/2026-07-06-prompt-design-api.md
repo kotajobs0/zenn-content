@@ -3,7 +3,7 @@ title: "プロンプト設計はAPI設計と同じだった——「引数」「
 emoji: "🧩"
 type: "tech"
 topics: ["java", "ai", "claude", "プロンプトエンジニアリング", "api"]
-published: false
+published: true
 ---
 
 こんにちは。エンジニアをしている長井洸太です。
