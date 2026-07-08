@@ -3,7 +3,7 @@ title: "C#でAnthropic Claude APIを叩く最小サンプル"
 emoji: "💻"
 type: "tech"
 topics: ["csharp", "dotnet", "claude", "api", "ai"]
-published: false
+published: true
 ---
 
 こんにちは。エンジニアをしている長井洸太です。
